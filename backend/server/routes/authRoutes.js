@@ -2,13 +2,15 @@ import express from "express";
 import User from "../models/User.js";
 import generateToken from "../utils/generateToken.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { validateRegister, validateLogin, handleValidationErrors } from "../middleware/validation.js";
+import { authLimiter } from "../middleware/rateLimit.js";
 
 const router = express.Router();
 
 // @desc    Auth user & get token
 // @route   POST /api/auth/login
 // @access  Public
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, validateLogin, handleValidationErrors, async (req, res) => {
   const { email, password } = req.body;
 
   try {
@@ -33,8 +35,8 @@ router.post("/login", async (req, res) => {
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
-router.post("/register", async (req, res) => {
-  const { name, email, password, isAdmin } = req.body;
+router.post("/register", authLimiter, validateRegister, handleValidationErrors, async (req, res) => {
+  const { name, email, password } = req.body;
 
   try {
     const userExists = await User.findOne({ email });
@@ -43,11 +45,14 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
+    // SECURITY FIX: Never set isAdmin from client input
+    // isAdmin is only set to false for new users
+    // Only existing admins can toggle isAdmin via separate endpoint
     const user = await User.create({
       name,
       email,
       password,
-      isAdmin: isAdmin || false, // allow setting admin for testing if passed
+      // isAdmin: false (default from schema)
     });
 
     if (user) {
