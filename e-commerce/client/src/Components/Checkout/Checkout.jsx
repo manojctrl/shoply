@@ -8,33 +8,98 @@ import {
   MenuItem,
 } from "@mui/material";
 import { IoBagCheckOutline } from "react-icons/io5";
-import fashion2 from "../../assets/images/fashion2.jpg";
-import fashion3 from "../../assets/images/fashion3.jpg";
-
+import { useNavigate } from "react-router-dom";
+import { useDialog } from "../../ContextProvider/ContextProvider";
+import API from "../../services/api";
 import "./Checkout.css";
 
 const Checkout = () => {
-  const [province, setProvince] = useState("");
-  const [district, setDistrict] = useState("");
-  const [delivery, setDelivery] = useState("");
-  const [payment, setPayment] = useState("");
+  const navigate = useNavigate();
+  const { cartItems, userInfo, clearCart } = useDialog();
 
-  const handleSubmit = (e) => {
+  // Form states
+  const [fullName, setFullName] = useState(userInfo?.name || "");
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [zip, setZip] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState(userInfo?.email || "");
+  const [province, setProvince] = useState("Bagmati");
+  const [district, setDistrict] = useState("Kathmandu");
+  const [delivery, setDelivery] = useState("normal");
+  const [payment, setPayment] = useState("cod");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const shipping = delivery === "express" ? 150 : 0;
+  const totalAmount = subtotal + shipping;
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log({ province, district, delivery, payment });
+    setErrorMsg("");
+
+    if (!userInfo) {
+      setErrorMsg("Please sign in to place an order.");
+      navigate("/login");
+      return;
+    }
+
+    if (cartItems.length === 0) {
+      setErrorMsg("Your cart is empty.");
+      return;
+    }
+
+    const orderPayload = {
+      orderItems: cartItems.map((item) => ({
+        name: item.name,
+        qty: item.qty,
+        image: item.image,
+        price: item.price,
+        product: item.product,
+      })),
+      shippingAddress: {
+        address: `${address}, ${province}, ${district}`,
+        city: city,
+        phone: phone,
+      },
+      paymentMethod: payment === "cod" ? "Cash on Delivery" : payment.toUpperCase(),
+      totalPrice: totalAmount,
+    };
+
+    try {
+      await API.post("/orders", orderPayload);
+      clearCart();
+      navigate("/my-order");
+    } catch (error) {
+      console.error(error);
+      setErrorMsg(error.response?.data?.message || "Failed to place order. Try again.");
+    }
   };
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="checkout-container" style={{ textAlign: "center", padding: "100px 20px" }}>
+        <h2>Your Cart is Empty</h2>
+        <p style={{ marginTop: "15px", marginBottom: "25px" }}>You cannot checkout with an empty cart.</p>
+        <Button variant="contained" onClick={() => navigate("/")}>Go Home</Button>
+      </div>
+    );
+  }
 
   return (
     <section className="checkout-container">
       <div className="checkout-form">
         <form onSubmit={handleSubmit}>
           <h3>Billing Details</h3>
+          {errorMsg && <p className="error-message" style={{ color: "red", marginBottom: "15px" }}>{errorMsg}</p>}
 
           {/* Full Name and Country */}
           <div className="two-column-grid">
             <TextField
-              label="Full Name "
+              label="Full Name"
               variant="standard"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
               fullWidth
               required
             />
@@ -50,15 +115,12 @@ const Checkout = () => {
           {/* Street Address */}
           <h3>Street Address</h3>
           <TextField
-            label="House Number and Street Name "
+            label="House Number and Street Name"
             variant="standard"
+            value={address}
+            onChange={(e) => setAddress(e.target.value)}
             fullWidth
             required
-          />
-          <TextField
-            label="Apartment Name (optional)"
-            variant="standard"
-            fullWidth
           />
 
           {/* Province and District */}
@@ -99,14 +161,18 @@ const Checkout = () => {
           {/* City and ZIP */}
           <div className="two-column-grid">
             <TextField
-              label="City / Town "
+              label="City / Town"
               variant="standard"
+              value={city}
+              onChange={(e) => setCity(e.target.value)}
               fullWidth
               required
             />
             <TextField
-              label="ZIP Code "
+              label="ZIP Code"
               variant="standard"
+              value={zip}
+              onChange={(e) => setZip(e.target.value)}
               fullWidth
               required
             />
@@ -117,19 +183,24 @@ const Checkout = () => {
             <TextField
               label="Phone Number *"
               variant="standard"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
               fullWidth
               required
             />
             <TextField
-              label="Email Address "
+              label="Email Address"
               variant="standard"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               fullWidth
               required
             />
           </div>
 
           {/* Delivery Option */}
-          <FormControl variant="standard" fullWidth>
+          <FormControl variant="standard" fullWidth style={{ marginTop: "15px" }}>
             <InputLabel>Delivery Option *</InputLabel>
             <Select
               value={delivery}
@@ -143,7 +214,7 @@ const Checkout = () => {
           </FormControl>
 
           {/* Payment Method */}
-          <FormControl variant="standard" fullWidth>
+          <FormControl variant="standard" fullWidth style={{ marginTop: "15px" }}>
             <InputLabel>Payment Method *</InputLabel>
             <Select
               value={payment}
@@ -157,38 +228,18 @@ const Checkout = () => {
             </Select>
           </FormControl>
 
-          {/* Order Notes */}
-          {/* <TextField
-            label="Order Notes (optional)"
-            variant="standard"
-            fullWidth
-            multiline
-            rows={3}
-          /> */}
-
-          {/* Alternative Contacts */}
-          {/* <TextField
-            label="Alternative Contact Name (optional)"
-            variant="standard"
-            fullWidth
-          /> */}
-          {/* <TextField
-            label="Alternative Phone (optional)"
-            variant="standard"
-            fullWidth
-          /> */}
-
-          {/* <Button
+          <Button
             variant="contained"
             type="submit"
             color="primary"
             fullWidth
-            sx={{ marginTop: "20px" }}
+            sx={{ marginTop: "30px", padding: "12px" }}
           >
             PLACE ORDER
-          </Button> */}
+          </Button>
         </form>
       </div>
+
       <div className="payment-final-product-details">
         <h2>Your Order</h2>
 
@@ -202,86 +253,59 @@ const Checkout = () => {
               </tr>
             </thead>
             <tbody>
-              <tr>
-                <td>
-                  <img
-                    src={fashion2}
-                    alt="A-Line Kur"
-                    width="70"
-                    height="70"
-                    style={{ borderRadius: "8px" }}
-                  />
-                </td>
-                <td>A-Line Kurti With Shirt x 1</td>
-                <td>₹1,300.00</td>
-              </tr>
-              <tr>
-                <td>
-                  <img
-                    src={fashion3}
-                    alt="Smart Watch"
-                    width="70"
-                    height="70"
-                    style={{ borderRadius: "8px" }}
-                  />
-                </td>
-                <td>Morden Smart Watch x 1</td>
-                <td>₹2,500.00</td>
-              </tr>
-              <tr>
-                <td>
-                  <img
-                    src={fashion2}
-                    alt="Another Product"
-                    width="70"
-                    height="70"
-                    style={{ borderRadius: "8px" }}
-                  />
-                </td>
-                <td>Stylish Kurta x 1</td>
-                <td>₹1,000.00</td>
-              </tr>
-              <tr>
-                <td>
-                  <img
-                    src={fashion3}
-                    alt="Another Product"
-                    width="70"
-                    height="70"
-                    style={{ borderRadius: "8px" }}
-                  />
-                </td>
-                <td>Classic Watch x 1</td>
-                <td>₹1,200.00</td>
-              </tr>
-              <tr>
-                <td>
-                  <img
-                    src={fashion2}
-                    alt="Another Product"
-                    width="70"
-                    height="70"
-                    style={{ borderRadius: "8px" }}
-                  />
-                </td>
-                <td>Extra Product x 1</td>
-                <td>₹1,500.00</td>
-              </tr>
+              {cartItems.map((item, idx) => (
+                <tr key={`${item.product}-${item.size}-${idx}`}>
+                  <td>
+                    <img
+                      src={item.image}
+                      alt={item.name}
+                      width="60"
+                      height="60"
+                      style={{ borderRadius: "8px", objectFit: "cover" }}
+                    />
+                  </td>
+                  <td>
+                    {item.name} <br />
+                    <small style={{ color: "#666" }}>Size: {item.size} x {item.qty}</small>
+                  </td>
+                  <td>Rs{item.price * item.qty}</td>
+                </tr>
+              ))}
               <tr>
                 <td colSpan="2" style={{ textAlign: "right" }}>
                   <strong>Subtotal</strong>
                 </td>
                 <td>
-                  <strong>₹7,500.00</strong>
+                  <strong>Rs{subtotal}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan="2" style={{ textAlign: "right" }}>
+                  <strong>Shipping</strong>
+                </td>
+                <td>
+                  <strong>Rs{shipping}</strong>
+                </td>
+              </tr>
+              <tr>
+                <td colSpan="2" style={{ textAlign: "right" }}>
+                  <strong>Total Amount</strong>
+                </td>
+                <td>
+                  <strong>Rs{totalAmount}</strong>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <Button variant="outlined">
-          <IoBagCheckOutline />
-          Check Out{" "}
+        <Button 
+          variant="contained" 
+          onClick={handleSubmit}
+          className="checkout-final-btn"
+          sx={{ marginTop: "20px", display: "flex", gap: "10px", width: "100%", padding: "12px" }}
+        >
+          <IoBagCheckOutline size={20} /> Place Order
         </Button>
       </div>
     </section>

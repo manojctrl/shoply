@@ -1,173 +1,146 @@
-import React, { useState } from "react";
-import fashion3 from "../../assets/images/fashion3.jpg";
+import React from "react";
 import { Link } from "react-router-dom";
 import { IoClose } from "react-icons/io5";
-import './CartSpecifi.css'
+import { useDialog } from "../../ContextProvider/ContextProvider";
+import './CartSpecifi.css';
 
 const CartSpecifi = () => {
-  const [selectedSize, setSelectedSize] = useState("M");
-  const [quantity, setQuantity] = useState(1);
+  const { cartItems, removeFromCart, updateCartQty } = useDialog();
 
   const sizes = ["S", "M", "L", "XL", "XXL"];
 
-  const handleSizeClick = (size) => {
-    setSelectedSize(size);
+  const handleSizeChange = (item, newSize) => {
+    // If there is already an item of the new size, merge them, otherwise change size
+    const existing = cartItems.find(x => x.product === item.product && x.size === newSize);
+    if (existing) {
+      removeFromCart(item.product, item.size);
+      updateCartQty(item.product, newSize, existing.qty + item.qty);
+    } else {
+      removeFromCart(item.product, item.size);
+      // We can add it back with new size
+      updateCartQty(item.product, newSize, item.qty);
+    }
   };
 
-  const handleIncrease = () => {
-    setQuantity(quantity + 1);
+  const handleIncrease = (item) => {
+    updateCartQty(item.product, item.size, item.qty + 1);
   };
 
-  const handleDecrease = () => {
-    if (quantity > 1) setQuantity(quantity - 1);
+  const handleDecrease = (item) => {
+    if (item.qty > 1) {
+      updateCartQty(item.product, item.size, item.qty - 1);
+    }
   };
 
-  // Remove item function without actual logic
-  const handleRemoveItem = () => {
-    console.log("Remove item clicked - Add your logic here");
-    // Yaha tapaile pachi remove logic add garna saknuhunchha
-  };
+  const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.qty, 0);
+  const totalMrp = cartItems.reduce((acc, item) => acc + (item.originalPrice || item.price) * item.qty, 0);
+  const discountMrp = totalMrp - subtotal;
+  const shipping = subtotal > 2000 || subtotal === 0 ? 0 : 150;
+  const totalAmount = subtotal + shipping;
+
+  if (cartItems.length === 0) {
+    return (
+      <div className="cart-sp-container" style={{ textAlign: "center", padding: "80px 20px" }}>
+        <h2>Your Shopping Cart is Empty</h2>
+        <p style={{ marginTop: "15px", marginBottom: "25px" }}>Add items to your cart to start shopping.</p>
+        <Link to="/" className="place-order-btn-sp" style={{ display: "inline-block", padding: "12px 30px", textDecoration: "none" }}>
+          CONTINUE SHOPPING
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="cart-sp-container">
       <div className="carting">
         <div className="cart-title">Shopping Cart</div>
-        <div className="out-of-stock">Items out of stock</div>
+        <div className="out-of-stock">{cartItems.length} Items in your cart</div>
       </div>
       
       <div className="cart-sp">
         <div className="cart-sp-content">
-          {/* First Cart Item */}
-          <div className="cart-sp-items">
-            {/* Close/Delete Button */}
-            <button 
-              className="remove-item-btn"
-              onClick={handleRemoveItem}
-            >
-              <IoClose size={20} />
-            </button>
-            
-            <div className="cart-sp-image">
-              <img src={fashion3} alt="fashion" />
-            </div>
-            <div className="items-sp-details">
-              <div className="item-sp-brand">फ्लाइङ मेशिन</div>
-              <div className="items-sp-name">महिला वाइड लेग हाई-राइज</div>
+          {cartItems.map((item, idx) => (
+            <div className="cart-sp-items" key={`${item.product}-${item.size}-${idx}`}>
+              {/* Close/Delete Button */}
+              <button 
+                className="remove-item-btn"
+                onClick={() => removeFromCart(item.product, item.size)}
+              >
+                <IoClose size={20} />
+              </button>
               
-              {/* Size Selection */}
-              <div className="item-sp-size">
-                <span className="size-label-sp">Size:</span>
-                <div className="size-options">
-                  {sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`size-option ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => handleSizeClick(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
+              <div className="cart-sp-image">
+                <img src={item.image} alt={item.name} />
+              </div>
+              <div className="items-sp-details">
+                <div className="item-sp-brand">{item.brand}</div>
+                <div className="items-sp-name">{item.name}</div>
+                
+                {/* Size Selection */}
+                <div className="item-sp-size">
+                  <span className="size-label-sp">Size:</span>
+                  <div className="size-options">
+                    {sizes.map((size) => (
+                      <button
+                        key={size}
+                        className={`size-option ${item.size === size ? 'active' : ''}`}
+                        onClick={() => handleSizeChange(item, size)}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Quantity Selector */}
-              <div className="quantity-selector">
-                <span className="quantity-label">Quantity:</span>
-                <div className="quantity-controls">
-                  <button className="quantity-btn" onClick={handleDecrease}>-</button>
-                  <span className="quantity-value">{quantity}</span>
-                  <button className="quantity-btn" onClick={handleIncrease}>+</button>
+                {/* Quantity Selector */}
+                <div className="quantity-selector">
+                  <span className="quantity-label">Quantity:</span>
+                  <div className="quantity-controls">
+                    <button className="quantity-btn" onClick={() => handleDecrease(item)}>-</button>
+                    <span className="quantity-value">{item.qty}</span>
+                    <button className="quantity-btn" onClick={() => handleIncrease(item)}>+</button>
+                  </div>
                 </div>
-              </div>
 
-              <div className="item-price-sp">
-                <span className="current-price-sp">£1,214</span>
-                <span className="original-price-sp">£2,699</span>
-                <span className="discount-sp">55% OFF</span>
+                <div className="item-price-sp">
+                  <span className="current-price-sp">Rs{item.price}</span>
+                  {item.originalPrice && item.originalPrice > item.price && (
+                    <>
+                      <span className="original-price-sp">Rs{item.originalPrice}</span>
+                      <span className="discount-sp">{item.discount}% OFF</span>
+                    </>
+                  )}
+                </div>
+                <div className="return-info-sp">14 days return available</div>
               </div>
-              <div className="return-info-sp">14 days return available</div>
             </div>
-          </div>
-
-          {/* Second Cart Item */}
-          <div className="cart-sp-items">
-            {/* Close/Delete Button */}
-            <button 
-              className="remove-item-btn"
-              onClick={handleRemoveItem}
-            >
-              <IoClose size={20} />
-            </button>
-            
-            <div className="cart-sp-image">
-              <img src={fashion3} alt="fashion" />
-            </div>
-            <div className="items-sp-details">
-              <div className="item-sp-brand">फ्लाइङ मेशिन</div>
-              <div className="items-sp-name">महिला वाइड लेग हाई-राइज</div>
-              
-              {/* Size Selection for second item */}
-              <div className="item-sp-size">
-                <span className="size-label-sp">Size:</span>
-                <div className="size-options">
-                  {sizes.map((size) => (
-                    <button
-                      key={size}
-                      className={`size-option ${selectedSize === size ? 'active' : ''}`}
-                      onClick={() => handleSizeClick(size)}
-                    >
-                      {size}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Quantity Selector for second item */}
-              <div className="quantity-selector">
-                <span className="quantity-label">Quantity:</span>
-                <div className="quantity-controls">
-                  <button className="quantity-btn" onClick={handleDecrease}>-</button>
-                  <span className="quantity-value">{quantity}</span>
-                  <button className="quantity-btn" onClick={handleIncrease}>+</button>
-                </div>
-              </div>
-
-              <div className="item-price-sp">
-                <span className="current-price-sp">£1,214</span>
-                <span className="original-price-sp">£2,699</span>
-                <span className="discount-sp">55% OFF</span>
-              </div>
-              <div className="return-info-sp">14 days return available</div>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="cart-summary-sp">
           <div className="price-details-sp">
-            <div className="price-title-sp">PRICE DETAILS (2 items)</div>
+            <div className="price-title-sp">PRICE DETAILS ({cartItems.length} items)</div>
             <div className="price-row-sp">
               <span className="price-label-sp">Total MRP</span>
-              <span className="price-value-sp">£3,794</span>
+              <span className="price-value-sp">Rs{totalMrp}</span>
             </div>
-            <div className="price-row-sp">
-              <span className="price-label-sp">Discount on MRP</span>
-              <span className="price-value-sp discount-value-sp">- £1,485</span>
-            </div>
-            <div className="price-row-sp coupon-section">
-              <span className="price-label-sp">Coupon Discount</span>
-              <Link to="#" className="apply-coupon-sp">Apply Coupon</Link>
-            </div>
+            {discountMrp > 0 && (
+              <div className="price-row-sp">
+                <span className="price-label-sp">Discount on MRP</span>
+                <span className="price-value-sp discount-value-sp">- Rs{discountMrp}</span>
+              </div>
+            )}
             <div className="price-row-sp">
               <span className="price-label-sp">Platform Fee</span>
               <span className="price-value-sp">FREE</span>
             </div>
             <div className="price-row-sp">
               <span className="price-label-sp">Shipping Fee</span>
-              <span className="price-value-sp">Free shipping for you</span>
+              <span className="price-value-sp">{shipping === 0 ? "FREE" : `Rs${shipping}`}</span>
             </div>
             <div className="total-amount-sp">
               <span>Total Amount</span>
-              <span>£2,309</span>
+              <span>Rs{totalAmount}</span>
             </div>
           </div>
           <Link to="/checkout" className="place-order-btn-sp">PLACE ORDER</Link>

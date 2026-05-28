@@ -11,16 +11,17 @@ import ProductItem from "../ProductsItem/ProductItem";
 // import { CiStar } from "react-icons/ci";
 import { FaStar, FaRegStar } from "react-icons/fa";
 
+import { useDialog } from "../../ContextProvider/ContextProvider";
+
 const ProductDetails = () => {
   const { productId } = useParams();
-
   const [activeTab, setActiveTab] = useState("description");
+  const [selectedSize, setSelectedSize] = useState("M");
 
-  // const navigate = useNavigate();
-
-  // console.log(productId);
-  const product = products.find((p) => p.id === parseInt(productId));
+  const { products: dbProducts, addToCart, openDrawer } = useDialog();
   const navigate = useNavigate();
+
+  const product = dbProducts.find((p) => p._id === productId || p.id === parseInt(productId)) || products.find((p) => p.id === parseInt(productId));
 
   if (!product) {
     return <div className="not-found"> 404 not found</div>;
@@ -41,6 +42,11 @@ const ProductDetails = () => {
 
   const[visibleReviews,setVisibleReviews]= useState(3);
 
+  const handleAddToCart = () => {
+    addToCart(product, number, selectedSize);
+    openDrawer();
+  };
+
   return (
     <div className="container-details">
       <div className="back-btn-container">
@@ -60,8 +66,6 @@ const ProductDetails = () => {
                 alt: product.name,
                 isFluidWidth: true,
                 src: product.image,
-                // height: 500,
-                // width: 400,
               },
               largeImage: {
                 src: product.image,
@@ -85,10 +89,6 @@ const ProductDetails = () => {
               <p>ब्रान्ड: {product.brand}</p>
             </div>
             <div className="rating-wala">
-              {/* <p>
-                रेटिङ: {"★".repeat(product.rating)} ({product.rating}/5)
-              </p> */}
-
               {Array.from({ length: 5 }).map((_, index) => {
                 return index < product.rating ? (
                   <FaStar key={index} color="gold" />
@@ -99,13 +99,13 @@ const ProductDetails = () => {
             </div>
             <div className="discount-wala">
               <div className="chut">
-                <p>छुट: {product.price}</p>
+                <p>छुट: {product.discount}%</p>
               </div>
               <div className="pareko-price">
-                <p>परेको मूल्य: {product.originalPrice}</p>
+                <p>परेको मूल्य: Rs{product.originalPrice}</p>
               </div>
               <div className="jamma-kati-xata-product">
-                <p>जम्मा कति छाता: {products.length}</p>
+                <p>मूल्य: Rs{product.price}</p>
               </div>
             </div>
             <div className="saman-ko-barema-jankari">
@@ -118,7 +118,12 @@ const ProductDetails = () => {
             <div className="size-selector">
               <label>Size: </label>
               {["S", "M", "L", "XL", "XXL"].map((s, i) => (
-                <Button variant="outlined" key={i} className="size-btn">
+                <Button 
+                  variant={selectedSize === s ? "contained" : "outlined"} 
+                  key={i} 
+                  className={`size-btn ${selectedSize === s ? 'active' : ''}`}
+                  onClick={() => setSelectedSize(s)}
+                >
                   {s}
                 </Button>
               ))}
@@ -149,7 +154,7 @@ const ProductDetails = () => {
 
             <div className="add-to-cart-whislist-compare">
               <div className="add-wala">
-                <Button variant="contained" className="add-to-cart-btn">
+                <Button variant="contained" className="add-to-cart-btn" onClick={handleAddToCart}>
                   {" "}
                   <FaCartShopping />
                   ADD TO CART
