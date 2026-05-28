@@ -1,6 +1,6 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { 
-  FaHandMiddleFinger, 
   FaHome, 
   FaUsers, 
   FaBox, 
@@ -31,17 +31,6 @@ const Sidebar = () => {
       link: "/dashboard"
     },
     { 
-      id: "home-slide", 
-      label: "Home Slide", 
-      icon: <FaHome />,
-      link: "/home-slide",
-      subItems: [
-        { id: "subslide-1", label: "Sub Slide 1", link: "/home-slide/subslide-1" },
-        { id: "subslide-2", label: "Sub Slide 2", link: "/home-slide/subslide-2" },
-        { id: "subslide-3", label: "Sub Slide 3", link: "/home-slide/subslide-3" }
-      ]
-    },
-    { 
       id: "users", 
       label: "Users", 
       icon: <FaUsers />,
@@ -53,40 +42,16 @@ const Sidebar = () => {
       icon: <FaBox />,
       link: "/products",
       subItems: [
-        { id: "all-products", label: "All Products", link: "/products/all" },
-        { id: "add-product", label: "Add Product", link: "/products/add" },
-        { id: "product-categories", label: "Categories", link: "/products/categories" },
-        { id: "product-reviews", label: "Reviews", link: "/products/reviews" }
-      ]
-    },
-    { 
-      id: "category", 
-      label: "Category", 
-      icon: <FaTags />,
-      link: "/category",
-      subItems: [
-        { id: "main-categories", label: "Main Categories", link: "/category/main" },
-        { id: "sub-categories", label: "Sub Categories", link: "/category/sub" },
-        { id: "manage-categories", label: "Manage Categories", link: "/category/manage" }
+        { id: "all-products", label: "All Products", link: "/products" },
+        { id: "add-product", label: "Add Product", link: "/products/add" }
       ]
     },
     { 
       id: "orders", 
       label: "Orders", 
       icon: <FaShoppingCart />,
-      link: "/orders",
-      subItems: [
-        { id: "pending-orders", label: "Pending Orders", link: "/orders/pending" },
-        { id: "completed-orders", label: "Completed Orders", link: "/orders/completed" },
-        { id: "cancelled-orders", label: "Cancelled Orders", link: "/orders/cancelled" }
-      ]
-    },
-    { 
-      id: "logout", 
-      label: "Logout", 
-      icon: <FaSignOutAlt />,
-      link: "/logout"
-    },
+      link: "/orders"
+    }
   ];
 
   return (
@@ -97,9 +62,9 @@ const Sidebar = () => {
         <div className="sidebar-header">
           <div className="logo">
             <span className="logo-icon">
-              <FaHandMiddleFinger />
+              <FaShoppingCart />
             </span>
-            <span className="logo-text">FUCK YOU</span>
+            <span className="logo-text">Shoply Admin</span>
           </div>
         </div>
 
@@ -107,46 +72,44 @@ const Sidebar = () => {
         <div className="sidebar-menu">
           {menuItems.map((item) => (
             <div key={item.id}>
-              <div
-                className={`menu-item ${activeItem === item.label ? "active" : ""}`}
-                onClick={() => {
-                  if (item.subItems) {
-                    toggleSubMenu(item.id);
-                  } else {
-                    setActiveItem(item.label);
-                    // In a real app, you would navigate using React Router
-                    // navigate(item.link);
-                  }
-                }}
-              >
-                <span className="menu-icon">{item.icon}</span>
-                <span className="menu-label">{item.label}</span>
-                {item.subItems && (
-                  <span className="menu-arrow">
-                    {expandedItems[item.id] ? <FaChevronDown /> : <FaChevronRight />}
-                  </span>
-                )}
-              </div>
-              
-              {/* Sub Menu Items */}
-              {item.subItems && expandedItems[item.id] && (
-                <div className="sub-menu">
-                  {item.subItems.map((subItem) => (
-                    <div
-                      key={subItem.id}
-                      className={`sub-menu-item ${activeItem === subItem.label ? "active" : ""}`}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setActiveItem(subItem.label);
-                        // In a real app, you would navigate using React Router
-                        // navigate(subItem.link);
-                      }}
-                    >
-                      <span className="sub-menu-icon">•</span>
-                      <span className="sub-menu-label">{subItem.label}</span>
+              {item.subItems ? (
+                <>
+                  <div
+                    className={`menu-item ${activeItem === item.label ? "active" : ""}`}
+                    onClick={() => toggleSubMenu(item.id)}
+                  >
+                    <span className="menu-icon">{item.icon}</span>
+                    <span className="menu-label">{item.label}</span>
+                    <span className="menu-arrow">
+                      {expandedItems[item.id] ? <FaChevronDown /> : <FaChevronRight />}
+                    </span>
+                  </div>
+                  {expandedItems[item.id] && (
+                    <div className="sub-menu">
+                      {item.subItems.map((subItem) => (
+                        <Link to={subItem.link} key={subItem.id} style={{ textDecoration: 'none', color: 'inherit' }}>
+                          <div
+                            className={`sub-menu-item ${activeItem === subItem.label ? "active" : ""}`}
+                            onClick={() => setActiveItem(subItem.label)}
+                          >
+                            <span className="sub-menu-icon">•</span>
+                            <span className="sub-menu-label">{subItem.label}</span>
+                          </div>
+                        </Link>
+                      ))}
                     </div>
-                  ))}
-                </div>
+                  )}
+                </>
+              ) : (
+                <Link to={item.link} style={{ textDecoration: 'none', color: 'inherit' }}>
+                  <div
+                    className={`menu-item ${activeItem === item.label ? "active" : ""}`}
+                    onClick={() => setActiveItem(item.label)}
+                  >
+                    <span className="menu-icon">{item.icon}</span>
+                    <span className="menu-label">{item.label}</span>
+                  </div>
+                </Link>
               )}
             </div>
           ))}
