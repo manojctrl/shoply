@@ -1,6 +1,7 @@
 import express from "express";
 import Product from "../models/Product.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
+import { validateProduct, handleValidationErrors } from "../middleware/validation.js";
 
 const router = express.Router();
 
@@ -207,7 +208,7 @@ router.get("/:id", async (req, res) => {
 // @desc    Create a product
 // @route   POST /api/products
 // @access  Private/Admin
-router.post("/", protect, admin, async (req, res) => {
+router.post("/", protect, admin, validateProduct, handleValidationErrors, async (req, res) => {
   const { name, brand, price, originalPrice, discount, rating, image, category, subcategory, additionalInfo } = req.body;
 
   try {
@@ -235,7 +236,7 @@ router.post("/", protect, admin, async (req, res) => {
 // @desc    Update a product
 // @route   PUT /api/products/:id
 // @access  Private/Admin
-router.put("/:id", protect, admin, async (req, res) => {
+router.put("/:id", protect, admin, validateProduct, handleValidationErrors, async (req, res) => {
   const { name, brand, price, originalPrice, discount, image, category, subcategory, additionalInfo, countInStock } = req.body;
 
   try {
