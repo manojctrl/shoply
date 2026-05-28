@@ -15,9 +15,11 @@ import { useDialog } from "../../ContextProvider/ContextProvider";
 import manoj from "../../assets/images/manoj.jpg";
 
 const Header = () => {
-  const { toggleDrawer, isLogin, setIsLogin } = useDialog();
+  const { toggleDrawer, userInfo, logoutUser, cartItems } = useDialog();
   const [openProfileMenu, setOpenProfileMenu] = useState(false);
   const menuRef = useRef(null);
+
+  const cartCount = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   // ✅ Close dropdown when clicking outside
   useEffect(() => {
@@ -57,7 +59,7 @@ const Header = () => {
         <div className="middle-header">
           {/* Logo */}
           <div className="logo">
-            <h1>Shoply</h1>
+            <h1><Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>Shoply</Link></h1>
           </div>
 
           {/* Navigation */}
@@ -76,7 +78,7 @@ const Header = () => {
               <ul>
                 {/* Profile / Login */}
                 <li className="profile-container" ref={menuRef}>
-                  {isLogin ? (
+                  {userInfo ? (
                     <div className="profile-wrapper">
                       <div
                         className="profile-trigger"
@@ -86,8 +88,8 @@ const Header = () => {
                           <img src={manoj} alt="profile" />
                         </div>
                         <div className="profile-info">
-                          <h4>Manoj Katwal</h4>
-                          <p>katwalmanoj67@gmail.com</p>
+                          <h4>{userInfo.name}</h4>
+                          <p>{userInfo.email}</p>
                         </div>
                       </div>
 
@@ -119,10 +121,7 @@ const Header = () => {
                               onClick={() => setOpenProfileMenu(false)} // ✅ close on click
                             >
                               <MdOutlineAccountCircle className="item-icon" />
-                              {/* <Link to='/my-list' style={{ textDecoration: "none", color: "inherit" }}> */}
-
                               <span>My List</span>
-                              {/* </Link> */}
                             </div>
                           </Link>
 
@@ -148,7 +147,7 @@ const Header = () => {
                             <div
                               className="dropdown-item logout-item"
                               onClick={() => {
-                                setIsLogin(false);
+                                logoutUser();
                                 setOpenProfileMenu(false);
                               }}
                             >
@@ -190,10 +189,10 @@ const Header = () => {
                 </li>
 
                 {/* Cart */}
-                <li onClick={toggleDrawer}>
+                <li onClick={toggleDrawer} style={{ cursor: "pointer" }}>
                   <Tooltip title="Cart">
                     <Stack spacing={2} direction="row" alignItems="center">
-                      <Badge color="secondary" badgeContent={2} showZero>
+                      <Badge color="secondary" badgeContent={cartCount} showZero>
                         <FiShoppingCart size={24} />
                       </Badge>
                     </Stack>

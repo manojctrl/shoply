@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import fashion1 from "../../assets/images/fashion1.jpg";
 import Product from "./Product";
 import { FaChevronRight, FaChevronLeft } from "react-icons/fa";
-import { products } from "../../Data/LocalStorage";
+import { useDialog } from "../../ContextProvider/ContextProvider";
 
 const ProductItem = ({
   heading,
@@ -18,6 +18,7 @@ const ProductItem = ({
   id
 }) => {
   const scrollRef = useRef();
+  const { products: dbProducts } = useDialog();
 
   const scrollLeft = () => {
     if (scrollRef.current) {
@@ -31,8 +32,7 @@ const ProductItem = ({
     }
   };
 
-  // Fixed the logical operator - changed & to &&
-  const displayedProducts = prod && prod.length > 0 ? prod : products;
+  const displayedProducts = prod && prod.length > 0 ? prod : dbProducts;
 
   return (
     <div className="product-item">
@@ -85,7 +85,7 @@ const ProductItem = ({
               rating={p.rating}
               originalPrice={p.originalPrice}
               price={p.price}
-              id={p.id}
+              id={p._id || p.id}
             />
           ))}
         </div>
