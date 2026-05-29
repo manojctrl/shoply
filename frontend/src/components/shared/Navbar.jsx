@@ -1,5 +1,5 @@
 import React from 'react';
-import { useAuthStore } from '../context/stores';
+import { useAuthStore } from '../../context/stores';
 
 export default function Navbar() {
   return (

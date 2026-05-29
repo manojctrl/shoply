@@ -1,6 +1,6 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { useAuthStore } from '../context/stores';
+import { useAuthStore } from '../../context/stores';
 
 export default function ProtectedRoute({ children, adminOnly = false }) {
   const user = useAuthStore((state) => state.user);
