@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useAuthStore } from '../context/stores';
 
@@ -33,15 +33,21 @@ export default function RegisterPage() {
 
     try {
       const response = await authAPI.register({
-        name: formData.name,
-        email: formData.email,
+        name: formData.name.trim(),
+        email: formData.email.trim(),
         password: formData.password,
       });
-      const { user, token } = response.data;
+      const { token, ...user } = response.data;
       login(user, token);
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.message || 'Registration failed');
+      const errorData = err.response?.data;
+      const validationMessages = errorData?.errors
+        ?.map((item) => item.message)
+        .filter(Boolean)
+        .join('. ');
+
+      setError(validationMessages || errorData?.message || 'Registration failed');
     } finally {
       setLoading(false);
     }
@@ -52,7 +58,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md">
         <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-lg dark:border-gray-700 dark:bg-gray-900">
           <div className="mb-8 text-center">
-            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary-500 text-white font-bold mx-auto mb-4">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-lg bg-primary-500 font-bold text-white">
               S
             </div>
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Shoply</h1>
@@ -67,7 +73,7 @@ export default function RegisterPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Full Name
               </label>
               <input
@@ -82,7 +88,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email
               </label>
               <input
@@ -97,7 +103,7 @@ export default function RegisterPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Password
               </label>
               <input
@@ -106,13 +112,16 @@ export default function RegisterPage() {
                 value={formData.password}
                 onChange={handleChange}
                 className="input"
-                placeholder="••••••••"
+                placeholder="At least 6 characters"
                 required
               />
+              <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                Use at least 6 characters with one uppercase letter and one number.
+              </p>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300">
                 Confirm Password
               </label>
               <input
@@ -121,16 +130,12 @@ export default function RegisterPage() {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 className="input"
-                placeholder="••••••••"
+                placeholder="Repeat your password"
                 required
               />
             </div>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary w-full"
-            >
+            <button type="submit" disabled={loading} className="btn-primary w-full">
               {loading ? 'Creating account...' : 'Create account'}
             </button>
           </form>
@@ -138,12 +143,12 @@ export default function RegisterPage() {
           <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{' '}
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
               >
                 Sign in
-              </a>
+              </Link>
             </p>
           </div>
         </div>

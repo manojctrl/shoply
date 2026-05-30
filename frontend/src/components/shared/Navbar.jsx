@@ -1,29 +1,32 @@
 import React from 'react';
-import { useAuthStore } from '../../context/stores';
+import { NavLink } from 'react-router-dom';
+
+const navItems = [
+  { label: 'Home', to: '/' },
+  { label: 'Products', to: '/products' },
+  { label: 'Orders', to: '/orders' },
+];
 
 export default function Navbar() {
   return (
-    <nav className="border-b border-gray-200 bg-white px-6 py-3 dark:border-gray-700 dark:bg-gray-900">
-      <div className="flex items-center justify-between">
-        <div className="flex space-x-6">
-          <a href="/" className="text-gray-600 hover:text-primary-500 dark:text-gray-300 transition-colors">
-            Home
-          </a>
-          <a href="/products" className="text-gray-600 hover:text-primary-500 dark:text-gray-300 transition-colors">
-            Products
-          </a>
-          <a href="/about" className="text-gray-600 hover:text-primary-500 dark:text-gray-300 transition-colors">
-            About
-          </a>
-        </div>
-        <div className="flex items-center space-x-4">
-          <a href="/cart" className="text-gray-600 hover:text-primary-500 dark:text-gray-300 transition-colors">
-            Cart
-          </a>
-          <a href="/account" className="text-gray-600 hover:text-primary-500 dark:text-gray-300 transition-colors">
-            Account
-          </a>
-        </div>
+    <nav className="border-b border-slate-200 bg-white px-4 dark:border-slate-800 dark:bg-slate-950 sm:px-6">
+      <div className="mx-auto flex max-w-7xl items-center gap-2 overflow-x-auto py-3">
+        {navItems.map((item) => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            className={({ isActive }) =>
+              `whitespace-nowrap rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+                isActive
+                  ? 'bg-slate-950 text-white dark:bg-white dark:text-slate-950'
+                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white'
+              }`
+            }
+            end={item.to === '/'}
+          >
+            {item.label}
+          </NavLink>
+        ))}
       </div>
     </nav>
   );

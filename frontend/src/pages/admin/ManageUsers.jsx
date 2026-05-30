@@ -1,51 +1,82 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { usersAPI } from '../../services/api';
+import { formatDate } from '../../utils/helpers';
 
 export default function ManageUsers() {
-  const [users] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Customer', status: 'Active' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Admin', status: 'Active' },
-    { id: 3, name: 'Bob Johnson', email: 'bob@example.com', role: 'Customer', status: 'Inactive' },
-  ]);
+  const [users, setUsers] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const loadUsers = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const response = await usersAPI.getAll();
+      setUsers(response.data);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not load users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadUsers();
+  }, []);
+
+  const handleToggleAdmin = async (id) => {
+    try {
+      await usersAPI.toggleAdmin(id);
+      await loadUsers();
+    } catch (err) {
+      setError(err.response?.data?.message || 'Could not update user role');
+    }
+  };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Users</h1>
+      {error && <div className="rounded-lg bg-red-50 p-4 text-sm text-red-600">{error}</div>}
 
-      <div className="card overflow-hidden">
-        <table className="w-full">
-          <thead className="border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
-            <tr>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Name</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Email</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Role</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
-              <th className="px-6 py-3 text-left text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-            {users.map((user) => (
-              <tr key={user.id} className="hover:bg-gray-50 dark:hover:bg-gray-800">
-                <td className="px-6 py-4 text-sm text-gray-900 dark:text-white font-medium">{user.name}</td>
-                <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-400">{user.email}</td>
-                <td className="px-6 py-4 text-sm">
-                  <span className={`badge ${user.role === 'Admin' ? 'badge-danger' : 'badge-info'}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm">
-                  <span className={`badge ${user.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm space-x-2">
-                  <button className="text-primary-500 hover:text-primary-700 dark:text-primary-400">Edit</button>
-                  <button className="text-red-500 hover:text-red-700 dark:text-red-400">Delete</button>
-                </td>
+      <div className="card overflow-x-auto">
+        {loading ? (
+          <p>Loading users...</p>
+        ) : (
+          <table className="w-full min-w-[720px]">
+            <thead className="border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+              <tr>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Name</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Role</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Joined</th>
+                <th className="px-4 py-3 text-left text-sm font-semibold">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+              {users.map((user) => (
+                <tr key={user._id}>
+                  <td className="px-4 py-4 text-sm font-medium">{user.name}</td>
+                  <td className="px-4 py-4 text-sm">{user.email}</td>
+                  <td className="px-4 py-4 text-sm">
+                    <span className={`badge ${user.isAdmin ? 'badge-danger' : 'badge-info'}`}>
+                      {user.isAdmin ? 'Admin' : 'Customer'}
+                    </span>
+                  </td>
+                  <td className="px-4 py-4 text-sm">{user.createdAt ? formatDate(user.createdAt) : '-'}</td>
+                  <td className="px-4 py-4 text-sm">
+                    <button onClick={() => handleToggleAdmin(user._id)} className="text-primary-500 hover:text-primary-700">
+                      {user.isAdmin ? 'Make Customer' : 'Make Admin'}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Delete/update user backend endpoints are not available yet, so this page connects list and admin toggle only.
+      </p>
     </div>
   );
 }

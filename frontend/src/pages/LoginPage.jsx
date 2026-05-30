@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { authAPI } from '../services/api';
 import { useAuthStore } from '../context/stores';
 
@@ -21,8 +21,8 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await authAPI.login(formData.email, formData.password);
-      const { user, token } = response.data;
+      const response = await authAPI.login(formData.email.trim(), formData.password);
+      const { token, ...user } = response.data;
       login(user, token);
       navigate(user.isAdmin ? '/admin' : '/');
     } catch (err) {
@@ -93,12 +93,12 @@ export default function LoginPage() {
           <div className="mt-6 border-t border-gray-200 pt-6 dark:border-gray-700">
             <p className="text-center text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{' '}
-              <a
-                href="/register"
+              <Link
+                to="/register"
                 className="font-medium text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
               >
                 Sign up
-              </a>
+              </Link>
             </p>
           </div>
         </div>

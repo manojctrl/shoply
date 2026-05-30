@@ -47,6 +47,7 @@ export const authAPI = {
 export const productsAPI = {
   getAll: (params) => api.get('/products', { params }),
   getById: (id) => api.get(`/products/${id}`),
+  seed: () => api.post('/products/seed'),
   create: (data) => api.post('/products', data),
   update: (id, data) => api.put(`/products/${id}`, data),
   delete: (id) => api.delete(`/products/${id}`),
@@ -56,25 +57,22 @@ export const productsAPI = {
 export const categoriesAPI = {
   getAll: () => api.get('/categories'),
   getById: (id) => api.get(`/categories/${id}`),
+  seed: () => api.post('/categories/seed'),
   create: (data) => api.post('/categories', data),
-  update: (id, data) => api.put(`/categories/${id}`, data),
-  delete: (id) => api.delete(`/categories/${id}`),
+  addSubcategory: (id, subcategory) => api.post(`/categories/${id}/subcategories`, { subcategory }),
 };
 
 // Orders APIs
 export const ordersAPI = {
   getAll: (params) => api.get('/orders', { params }),
+  getMine: () => api.get('/orders/myorders'),
   getById: (id) => api.get(`/orders/${id}`),
   create: (data) => api.post('/orders', data),
-  update: (id, data) => api.put(`/orders/${id}`, data),
-  delete: (id) => api.delete(`/orders/${id}`),
+  updateStatus: (id, status) => api.put(`/orders/${id}/status`, { status }),
 };
 
 // Users APIs
 export const usersAPI = {
-  getAll: (params) => api.get('/users', { params }),
-  getById: (id) => api.get(`/users/${id}`),
-  update: (id, data) => api.put(`/users/${id}`, data),
-  toggleAdmin: (id, isAdmin) => api.put(`/users/${id}/admin`, { isAdmin }),
-  delete: (id) => api.delete(`/users/${id}`),
+  getAll: () => api.get('/auth/users'),
+  toggleAdmin: (id) => api.put(`/auth/users/${id}/role`),
 };
